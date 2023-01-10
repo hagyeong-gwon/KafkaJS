@@ -63,8 +63,15 @@ class Consumer {
     await this.consumer.run({
       // eachMessage: async ({ topic, partition, message, heartbeat, pause }) => {
       eachMessage: async ({message}) => {
+        let value;
         try {
-          await fun({...message, value: JSON.parse(message.value)});
+          value = JSON.parse(message.value);
+        } catch (e) {
+          value = message.value;
+        }
+
+        try {
+          await fun({...message, value});
         } catch (e) {
           await this.onError([message], e);
         }
@@ -87,7 +94,13 @@ class Consumer {
 
         try {
           const jobs = batch.messages.map(message => {
-            return {...message, value: JSON.parse(message.value)};
+            let value;
+            try {
+              value = JSON.parse(message.value);
+            } catch (e) {
+              value = message.value;
+            }
+            return {...message, value};
           });
           await fun(jobs);
         } catch (e) {
